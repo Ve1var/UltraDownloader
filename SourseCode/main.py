@@ -11,8 +11,6 @@ CONFIG_FILE = "app_config.json"
 DEFAULT_DIR = ""
 DEFAULT_FFMPEG = ""
 
-os.system("color 6")
-
 
 def load_setting():
     config_dir = os.path.dirname(CONFIG_FILE)
@@ -76,6 +74,9 @@ def save_setting(new_dir=None, new_ffmpeg=None):
 
 
 def main_menu(save_dir, ffmpeg_path):
+    os.system("color 6")
+    print("\n" + "="*50)
+    print("\nWelcome to UltraDownloader!")
     print("\n" + "="*50)
     print(f"Save directory: {save_dir}")
     print(f"FFmpeg: {ffmpeg_path or 'Not set'}")
@@ -83,8 +84,7 @@ def main_menu(save_dir, ffmpeg_path):
     print("Select a service:")
     print("1. VK Video")
     print("2. YouTube Video/Music")
-    #print("3. PornHub Video")
-    print("4. Music")
+    print("3. Music (exc VK music)")
     print("d. Change Download Directory")
     print("p. Set FFmpeg Path")
     print("q. Exit")
@@ -95,8 +95,7 @@ def main_menu(save_dir, ffmpeg_path):
     action = {
         "1": lambda: VK_video(save_dir, ffmpeg_path),
         "2": lambda: YT(save_dir, ffmpeg_path),
-        #"3": lambda: PH(save_dir, ffmpeg_path),
-        "4": lambda: musika(save_dir, ffmpeg_path),
+        "3": lambda: Music(save_dir, ffmpeg_path),
         "d": lambda: dir_change(save_dir, ffmpeg_path),
         "p": lambda: set_ffmpeg_path(save_dir, ffmpeg_path),
         "q": lambda: print("Exiting UltraDownloader. Goodbye!")
@@ -133,6 +132,7 @@ def yt_download_video(url, save_dir, service_name, ffmpeg_path):
         'progress_hooks': [lambda d: update_progress(d, service_name)]
     }
 
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
@@ -158,7 +158,7 @@ def yt_download_music(url, save_dir, service_name, ffmpeg_path):
         choice = '1'
 
     base_download_dir = os.path.join(save_dir, "UD_Downloaded")
-    music_dir = os.path.join(base_download_dir, service_name, "Music")
+    music_dir = os.path.join(base_download_dir, service_name)
     os.makedirs(music_dir, exist_ok=True)
 
     ydl_opts_probe = {
@@ -218,7 +218,7 @@ def update_progress(d, service_name):
         percent = (downloaded / total) * 100
 
         filled = int(bar_length * percent // 100)
-        bar = '▰' * filled + '▱' * (bar_length - filled)
+        bar = '|' * filled + '-' * (bar_length - filled)
 
         downloaded_mb = downloaded / (1024 * 1024)
         total_mb = total / (1024 * 1024)
@@ -240,18 +240,17 @@ def update_progress(d, service_name):
         print("\r" + " " * terminal_width, end="", flush=True)
         print("\rDownload completed.")
 
-
 def VK_video(save_dir, ffmpeg_path):
     url = input("Enter VK video URL:\n--> ")
-    yt_download_video(url, save_dir, "VK", ffmpeg_path)
+    yt_download_video(url, save_dir, "Video", ffmpeg_path)
 
 def YT(save_dir, ffmpeg_path):
     choice = input("1. Video\n2. Music\n--> ")
     url = input("Enter YouTube URL:\n--> ")
 
     action = {
-        "1": lambda: yt_download_video(url, save_dir, "YouTube", ffmpeg_path),
-        "2": lambda: yt_download_music(url, save_dir, "YouTubeMusic", ffmpeg_path)
+        "1": lambda: yt_download_video(url, save_dir, "Video", ffmpeg_path),
+        "2": lambda: yt_download_music(url, save_dir, "Music", ffmpeg_path)
     }
     func = action.get(choice)
     if func:
@@ -263,15 +262,9 @@ def YT(save_dir, ffmpeg_path):
         print("Invalid choice. Please try again.")
         main_menu(save_dir, ffmpeg_path)
 
-"""
-def PH(save_dir, ffmpeg_path):
-    url = input("Enter PornHub video URL:\n--> ")
-    yt_download_video(url, save_dir, "PH", ffmpeg_path)
-"""
-
-def musika(save_dir, ffmpeg_path):
-    url = input("Enter Test Music URL:\n--> ")
-    yt_download_music(url, save_dir, "TestMusic", ffmpeg_path)
+def Music(save_dir, ffmpeg_path):
+    url = input("Enter Music URL:\n--> ")
+    yt_download_music(url, save_dir, "Music", ffmpeg_path)
 
 def set_ffmpeg_path(save_dir, ffmpeg_path):
     print("Select ffmpeg.exe in the file dialog...")
@@ -292,7 +285,6 @@ def set_ffmpeg_path(save_dir, ffmpeg_path):
         main_menu(save_dir, updated_ffmpeg)
     else:
         main_menu(save_dir, ffmpeg_path)
-
 
 def dir_change(save_dir, ffmpeg_path):
     print("Select download directory in the folder dialog...")
@@ -316,7 +308,6 @@ def dir_change(save_dir, ffmpeg_path):
 
 
 def main():
-    print("\nWelcome to UltraDownloader!")
     save_dir, ffmpeg_path = load_setting()
     if not ffmpeg_path:
         print("FFmpeg not found. Please select ffmpeg.exe in the dialog.")
