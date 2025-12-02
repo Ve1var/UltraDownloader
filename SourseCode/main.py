@@ -8,8 +8,8 @@ root = tk.Tk()
 root.withdraw()
 
 CONFIG_FILE = "app_config.json"
-DEFAULT_DIR = "C:/Users/user_name/Videos"
-DEFAULT_FFMPEG = "C:/ffmpeg/bin/ffmpeg.exe"
+DEFAULT_DIR = ""
+DEFAULT_FFMPEG = ""
 
 os.system("color 6")
 
@@ -263,9 +263,11 @@ def YT(save_dir, ffmpeg_path):
         print("Invalid choice. Please try again.")
         main_menu(save_dir, ffmpeg_path)
 
+"""
 def PH(save_dir, ffmpeg_path):
     url = input("Enter PornHub video URL:\n--> ")
-    yt_download_video(url, save_dir, "VK", ffmpeg_path)
+    yt_download_video(url, save_dir, "PH", ffmpeg_path)
+"""
 
 def musika(save_dir, ffmpeg_path):
     url = input("Enter Test Music URL:\n--> ")
@@ -319,6 +321,9 @@ def main():
     if not ffmpeg_path:
         print("FFmpeg not found. Please select ffmpeg.exe in the dialog.")
         set_ffmpeg_path(save_dir, ffmpeg_path)
+    elif not save_dir:
+        print("Select main dir")
+        dir_change(save_dir, ffmpeg_path)
     else:
         main_menu(save_dir, ffmpeg_path)
 
