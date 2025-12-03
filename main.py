@@ -4,19 +4,37 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 
-root = tk.Tk()
-root.withdraw()
+APP_NAME = "UltraDownloader"
+APP_DATA = os.getenv('APPDATA')
+CONFIG_DIR = os.path.join(APP_DATA, APP_NAME)
+CONFIG_FILE = os.path.join(CONFIG_DIR, "app_config.json")
 
-CONFIG_FILE = "app_config.json"
 DEFAULT_DIR = ""
 DEFAULT_FFMPEG = ""
 
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
+def create_tk_root():
+    root = tk.Tk()
+    root.withdraw()
+    root.overrideredirect(True)
+    root.geometry("0x0+0+0")
+    root.attributes("-alpha", 0)
+    return root
+
+APP_NAME = "UltraDownloader"
+APP_DATA = os.getenv('APPDATA')
+CONFIG_DIR = os.path.join(APP_DATA, APP_NAME)
+CONFIG_FILE = os.path.join(CONFIG_DIR, "app_config.json")
+
+DEFAULT_DIR = ""
+DEFAULT_FFMPEG = ""
+
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
+root = create_tk_root()
 
 def load_setting():
-    config_dir = os.path.dirname(CONFIG_FILE)
-    if config_dir and not os.path.exists(config_dir):
-        os.makedirs(config_dir, exist_ok=True)
-
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -24,28 +42,20 @@ def load_setting():
         saved_ffmpeg = data.get("ffmpeg_dir", DEFAULT_FFMPEG)
 
         save_dir = saved_dir if os.path.exists(saved_dir) else DEFAULT_DIR
-
         ffmpeg_path = saved_ffmpeg if os.path.exists(saved_ffmpeg) else None
+
         if not ffmpeg_path:
             print("ffmpeg.exe not found at the saved path.")
-            print("Make sure the path is correct or set a new one.")
+            print("You can set it in the menu (p).")
 
         return save_dir, ffmpeg_path
 
     except (FileNotFoundError, json.JSONDecodeError):
-        print(f"Config file not found or corrupted. Creating default at {os.path.abspath(CONFIG_FILE)}")
-        default_config = {
-            "dir": DEFAULT_DIR,
-            "ffmpeg_dir": DEFAULT_FFMPEG
-        }
-        config_dir = os.path.dirname(CONFIG_FILE)
-        if config_dir and not os.path.exists(config_dir):
-            os.makedirs(config_dir, exist_ok=True)
-
+        print(f"Config file not found or corrupted. Creating default at {CONFIG_FILE}")
+        default_config = {"dir": DEFAULT_DIR, "ffmpeg_dir": DEFAULT_FFMPEG}
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(default_config, f, indent=4, ensure_ascii=False)
         return DEFAULT_DIR, None
-
 
 def save_setting(new_dir=None, new_ffmpeg=None):
     try:
@@ -71,7 +81,6 @@ def save_setting(new_dir=None, new_ffmpeg=None):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
     return True
-
 
 def main_menu(save_dir, ffmpeg_path):
     os.system("color 6")
@@ -111,7 +120,6 @@ def main_menu(save_dir, ffmpeg_path):
         print("Invalid choice. Please try again.")
         main_menu(save_dir, ffmpeg_path)
 
-
 def yt_download_video(url, save_dir, service_name, ffmpeg_path):
     if not url.strip():
         print("No URL provided.")
@@ -141,7 +149,6 @@ def yt_download_video(url, save_dir, service_name, ffmpeg_path):
         print(f"\nError: {str(e)}")
 
     main_menu(save_dir, ffmpeg_path)
-
 
 def yt_download_music(url, save_dir, service_name, ffmpeg_path):
     if not url.strip():
@@ -203,7 +210,6 @@ def yt_download_music(url, save_dir, service_name, ffmpeg_path):
         print(f"\nError during download: {str(e)}")
 
     main_menu(save_dir, ffmpeg_path)
-
 
 def update_progress(d, service_name):
     bar_length = 10
@@ -269,55 +275,57 @@ def Music(save_dir, ffmpeg_path):
 def set_ffmpeg_path(save_dir, ffmpeg_path):
     print("Select ffmpeg.exe in the file dialog...")
     new_ffmpeg = filedialog.askopenfilename(
+        parent=root,
         title="Select ffmpeg.exe",
         filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
     )
 
     if not new_ffmpeg:
         print("No file selected.")
-        main_menu(save_dir, ffmpeg_path)
-        return
+        return ffmpeg_path
 
-    success = save_setting(new_ffmpeg=new_ffmpeg)
-    if success:
-        _, updated_ffmpeg = load_setting()
-        print("Restarting menu with new FFmpeg path...")
-        main_menu(save_dir, updated_ffmpeg)
+    if os.path.exists(new_ffmpeg) and os.path.isfile(new_ffmpeg):
+        save_setting(new_ffmpeg=new_ffmpeg)
+        print(f"FFmpeg path saved: {new_ffmpeg}")
+        return new_ffmpeg
     else:
-        main_menu(save_dir, ffmpeg_path)
+        print("Invalid FFmpeg path. File does not exist.")
+        return ffmpeg_path
 
 def dir_change(save_dir, ffmpeg_path):
     print("Select download directory in the folder dialog...")
     new_dir = filedialog.askdirectory(
+        parent=root,
         title="Select Download Folder",
         initialdir=save_dir
     )
 
     if not new_dir:
         print("No directory selected.")
-        main_menu(save_dir, ffmpeg_path)
-        return
+        return save_dir
 
     if new_dir != save_dir:
         save_setting(new_dir=new_dir)
         print(f"Directory changed to: {new_dir}")
-        main_menu(new_dir, ffmpeg_path)
+        return new_dir
     else:
         print("Directory is already set to this path.")
-        main_menu(save_dir, ffmpeg_path)
-
+        return save_dir
 
 def main():
-    save_dir, ffmpeg_path = load_setting()
-    if not ffmpeg_path:
-        print("FFmpeg not found. Please select ffmpeg.exe in the dialog.")
-        set_ffmpeg_path(save_dir, ffmpeg_path)
-    elif not save_dir:
-        print("Select main dir")
-        dir_change(save_dir, ffmpeg_path)
-    else:
-        main_menu(save_dir, ffmpeg_path)
+    if not os.path.exists(CONFIG_FILE):
+        print("This is the first launch. Setting up UltraDownloader...")
+        save_dir, ffmpeg_path = DEFAULT_DIR, None
 
+        save_dir = dir_change(save_dir, ffmpeg_path)
+
+        ffmpeg_path = set_ffmpeg_path(save_dir, ffmpeg_path)
+
+        print("Setup complete. Starting main menu...")
+        main_menu(save_dir, ffmpeg_path)
+    else:
+        save_dir, ffmpeg_path = load_setting()
+        main_menu(save_dir, ffmpeg_path)
 
 if __name__ == "__main__":
     main()
