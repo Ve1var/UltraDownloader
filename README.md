@@ -55,6 +55,7 @@ For audio conversion features:
 
 ```cmd
 ==================================================
+
 Welcome to UltraDownloader!
 
 ==================================================
@@ -62,12 +63,9 @@ Save directory: C:\Users\YourName\Downloads
 FFmpeg: C:\ffmpeg\bin\ffmpeg.exe
 ==================================================
 Select a service:
-
-VK Video
-
-YouTube Video/Music
-
-Music (exc VK music)
+1. VK Video
+2. YouTube Video/Music
+3. Music (exc VK music)
 d. Change Download Directory
 p. Set FFmpeg Path
 q. Exit
