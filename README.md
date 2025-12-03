@@ -43,7 +43,7 @@ A powerful, user-friendly media downloader application for Windows that supports
    - Select your preferred download directory
    - Set FFmpeg path for audio conversion
 
-### FFmpeg Setup
+### FFmpeg Setup (optional, all the necessary FFmpeg files are already in the release archive)
 For audio conversion features:
 1. Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/)
 2. Extract to a folder
@@ -195,7 +195,7 @@ MIT License — free use and modification of the code
    - Выберите предпочитаемый каталог загрузки
    - Укажите путь к файлу FFmpeg для преобразования аудио
 
-### Настройка FFmpeg
+### Настройка FFmpeg (необязатольно, все нужные файлы FFmpeg уже есть в архиве релиза)
 Для функций преобразования аудио:
 1. Загрузите FFmpeg из [ffmpeg.org](https://ffmpeg.org/)
 2. Извлеките файл в папку
