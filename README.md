@@ -147,7 +147,7 @@ MIT License — free use and modification of the code
 *Note: Always respect content creators and copyright holders when downloading media.*
 
 
-**========================================================================================================**
+**=============================================================**
 
 
 # UltraDownloader 🚀 [RU]
