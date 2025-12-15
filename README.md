@@ -54,32 +54,25 @@ For audio conversion features:
 ### Main Menu Options
 
 ```cmd
-==================================================
-
-Welcome to UltraDownloader!
-
-==================================================
-Save directory: C:\Users\YourName\Downloads
-FFmpeg: C:\ffmpeg\bin\ffmpeg.exe
-==================================================
-Select a service:
-1. VK Video
-2. YouTube Video/Music
-3. Music (exc VK music)
-d. Change Download Directory
-p. Set FFmpeg Path
-q. Exit
-==================================================
+UltraDownloader v1.0.1
+--------------
+ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
+save_dir: C:/Users/79779/Videos
+--------------
+1. Download Video
+2. Download Music
+d. Change directory
+q. Quit
+Enter choice:
 ```
 
 ### Downloading Videos
-1. Select option `1` for VK or `2` for YouTube
-2. Choose Video or Music
-3. Paste the video URL when prompted
-4. Watch the progress bar and wait for completion
+1. Select option `1`
+2. Paste the video URL when prompted
+3. Watch the progress bar and wait for completion
 
 ### Downloading Music
-1. Select option `2` (YouTube) or `3` (Other music)
+1. Select option `2`
 2. Choose download mode:
    - `1`: Single track only
    - `2`: Entire playlist/album
@@ -206,32 +199,25 @@ MIT License — free use and modification of the code
 ### Пункты главного меню
 
 ```cmd
-==================================================
-
-Добро пожаловать в UltraDownloader!
-
-==================================================
-Сохранить каталог: C:\Users\YourName\Downloads
-FFmpeg: C:\ffmpeg\bin\ffmpeg.exe
-==================================================
-Выберите сервис:
-1. Видео из ВКонтакте
-2. Видео/Музыка с YouTube
-3. Музыка (кроме музыки из ВКОНТАКТЕ)
-d. Измените каталог загрузки
-p. Задайте путь к файлу FFmpeg
-q. Выйдите
-==================================================
+UltraDownloader v1.0.1
+--------------
+ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
+save_dir: C:/Users/79779/Videos
+--------------
+1. Download Video
+2. Download Music
+d. Change directory
+q. Quit
+Enter choice:
 ```
 
 ### Загрузка видео
-1. Выберите опцию `1` для VK или `2` для YouTube
-2. Выберите Видео или музыку
-3. Вставьте URL-адрес видео при появлении запроса
-4. Следите за индикатором выполнения и дождитесь завершения
+1. Выберите опцию `1`
+2. Вставьте URL-адрес видео при появлении запроса
+3. Следите за индикатором выполнения и дождитесь завершения
 
 ### Загрузка музыки
-1. Выберите опцию `2` (YouTube) или `3` (Другая музыка).
+1. Выберите опцию `2`
 2. Выберите режим загрузки:
    - `1`: только один трек
    - `2`: Весь список воспроизведения/альбом
