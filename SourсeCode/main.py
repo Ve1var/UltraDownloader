@@ -28,8 +28,8 @@ root = create_tk_root()
 
 class settings:
     def __init__(self):
-        self.save_dir = None
-        self.ffmpeg_path = None
+        self.save_dir = ""
+        self.ffmpeg_path = ""
         self.detecter_links = []
     
     def load(self):
@@ -77,7 +77,7 @@ class settings:
 
 class UltraDownloader:
     def main_menu(self):
-        print("\nUltraDownloader v1.0.1")
+        print("\nUltraDownloader v1.0.1a")
         print("--------------")
         print(f"ffmpeg_dir: {settings.ffmpeg_path}")
         print(f"save_dir: {settings.save_dir}")
