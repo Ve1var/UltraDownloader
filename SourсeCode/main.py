@@ -8,7 +8,7 @@ APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
 SETTINGS_DIR = os.path.join(APP_DATA, APP_NAME)
 CONFIG_FILE = os.path.join(SETTINGS_DIR, "app_config.json")
-DETECTER_FILE = os.path.join(SETTINGS_DIR, "detecter.json")
+DETECTER_FILE = os.path.join(SETTINGS_DIR, "detecter.json") #not use btw
 
 DEFAULT_DIR = ""
 DEFAULT_FFMPEG = ""
