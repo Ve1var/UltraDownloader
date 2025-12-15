@@ -77,10 +77,11 @@ class settings:
 
 class UltraDownloader:
     def main_menu(self):
-        print("UltraDownloader")
+        print("\nUltraDownloader v1.0.1")
         print("--------------")
         print(f"ffmpeg_dir: {settings.ffmpeg_path}")
         print(f"save_dir: {settings.save_dir}")
+        print("--------------")
         print("1. Download Video")
         print("2. Download Music")
         print("d. Change directory")
@@ -90,7 +91,7 @@ class UltraDownloader:
         action = {
             "1": lambda: yt_downloader.yt_download_video(self=None, save_dir=settings.save_dir, ffmpeg_path=settings.ffmpeg_path),
             "2": lambda: yt_downloader.yt_download_music(self=None, save_dir=settings.save_dir, ffmpeg_path=settings.ffmpeg_path),
-            "d": lambda: self.set_dirs(),
+            "d": lambda: self.change_dir(),
             "q": lambda: print("Exiting UltraDownloader. Goodbye!")
         }
 
@@ -109,6 +110,20 @@ class UltraDownloader:
             print("Directory not set. Please set the directory first.")
             self.set_dirs()
         else:
+            self.main_menu()
+
+    def change_dir(self):
+        try:
+            print("Select download directory in the folder dialog...")
+            new_dir = filedialog.askdirectory(
+                parent=root,
+                title="Select Download Folder",
+            )
+            settings.save_setting(new_dir=new_dir)
+        except:
+            new_dir = None
+
+        finally:
             self.main_menu()
 
     def set_dirs(self):
@@ -165,6 +180,7 @@ class yt_downloader:
             print("\nVideo downloaded.")
         except Exception as e:
             print(f"\nError: {str(e)}")
+            pass
 
         UltraDownloader.main_menu(self=None)
     
@@ -172,8 +188,8 @@ class yt_downloader:
         url = input("Enter Music URL: ").strip()
         
         base_download_dir = os.path.join(save_dir, "UD_Downloaded")
-        service_dir = os.path.join(base_download_dir, "Music")
-        os.makedirs(service_dir, exist_ok=True)
+        music_dir = os.path.join(base_download_dir, "Music")
+        os.makedirs(music_dir, exist_ok=True)
 
         print("Choose download mode:")
         print("1. Only this track")
@@ -184,10 +200,7 @@ class yt_downloader:
             print("Invalid choice. Defaulting to 'only this track'.")
             choice = '1'
 
-        base_download_dir = os.path.join(save_dir, "UD_Downloaded")
-        music_dir = os.path.join(base_download_dir, "Music")
-        os.makedirs(music_dir, exist_ok=True)
-
+        # Опции для проверки типа ссылки
         ydl_opts_probe = {
             'quiet': True,
             'extract_flat': True,
@@ -201,11 +214,15 @@ class yt_downloader:
                     playlist_title = info.get('title', 'Playlist')
                     video_count = info.get('playlist_count', len(info.get('entries', [])))
                     print(f"Found playlist: '{playlist_title}' | {video_count} tracks")
+                    entries = [entry['url'] for entry in info['entries'] if entry]
                 else:
                     print("Single track detected.")
+                    entries = [url]
             except Exception as e:
                 print(f"Could not analyze URL: {str(e)}")
+                entries = [url]
 
+        # Общие опции для скачивания аудио
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(music_dir, '%(title)s.%(ext)s'),
@@ -219,17 +236,27 @@ class yt_downloader:
             }],
             'progress_hooks': [lambda d: yt_downloader.update_progress(d, "Music")],
             'extract_flat': False,
-            'noplaylist': (choice == '1'),
+            'noplaylist': True,  # Обрабатываем вручную!
         }
 
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-            print("\nAudio extraction completed.")
-        except Exception as e:
-            print(f"\nError during download: {str(e)}")
+        # Скачивание каждого трека отдельно
+        failed_count = 0
+        total_count = len(entries)
+        print(f"\nStarting download of {total_count} track(s)...")
 
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            for i, entry_url in enumerate(entries, 1):
+                try:
+                    print(f"\n\n[{i}/{total_count}] Processing: {entry_url}")
+                    ydl.download([entry_url])
+                except Exception as e:
+                    print(f"\n[Error] Failed to download #{i}: {str(e)}")
+                    failed_count += 1
+                    continue  # Пропускаем и идём к следующему
+
+        print(f"\nAudio extraction completed. {failed_count}/{total_count} tracks failed.")
         UltraDownloader.main_menu(self=None)
+
 
     def update_progress(d, service_name):
         bar_length = 10
