@@ -4,7 +4,7 @@ A powerful, user-friendly media downloader application for Windows that supports
 
 ## 📥 Download Latest Version
 
-**[Download UltraDownloader.exe](https://github.com/Ve1var/UltraDownloader/releases/tag/Release)**
+**[Download UltraDownloader.exe](https://github.com/Ve1var/UltraDownloader/releases)**
 
 ## ✨ Features
 
@@ -156,7 +156,7 @@ MIT License — free use and modification of the code
 
 ## 📥 Скачать последнюю версию
 
-**[Скачать UltraDownloader.exe](https://github.com/Ve1var/UltraDownloader/releases/tag/Release)**
+**[Скачать UltraDownloader.exe](https://github.com/Ve1var/UltraDownloader/releases)**
 
 ## ✨ Особенности
 
