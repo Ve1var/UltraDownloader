@@ -2,6 +2,7 @@ import yt_dlp
 import json
 import os
 import tkinter as tk
+import requests
 from tkinter import filedialog
 
 APP_NAME = "UltraDownloader"
@@ -31,6 +32,55 @@ class settings:
         self.save_dir = ""
         self.ffmpeg_path = ""
         self.detecter_links = []
+        
+    def check_updates(self, owner, repo, current_version, asset_name):
+        url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+        response = requests.get(url)
+        
+        if response.status_code != 200:
+            print("Failed to check for updates.")
+            return None
+
+        data = response.json()
+        latest_version = data['tag_name']
+        release_url = data['html_url']
+        
+        if current_version == latest_version:
+            print("You are using the latest version.")
+            return None
+        else:
+            answer = input("New version available [y/n] (default 'y'): ").strip().lower()
+            if answer == "n":
+                return
+            else:
+                assets = data.get("assets", [])
+                target_asset = None
+
+                for asset in assets:
+                    if asset["name"] == asset_name:
+                        target_asset = asset
+                        break
+
+                if not target_asset:
+                    print(f"Asset {asset_name} not found.")
+                    return
+
+                download_url = target_asset["browser_download_url"]
+                DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
+                save_path = os.path.join(DOWNLOADS_DIR, asset_name)                
+                print(f"Downloading {asset_name}...")
+
+                try:
+                    with requests.get(download_url, stream=True) as r:
+                        r.raise_for_status()
+                        with open(save_path, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                    print(f"Download complete: {save_path}")
+                except Exception as e:
+                    print(f"Download error: {e}")
+                # === КОНЕЦ СКАЧИВАНИЯ ===
+  
     
     def load(self):
         try:
@@ -77,7 +127,7 @@ class settings:
 
 class UltraDownloader:
     def main_menu(self):
-        print("\nUltraDownloader v1.0.1a")
+        print(f"\nUltraDownloader {current_version}")
         print("--------------")
         print(f"ffmpeg_dir: {settings.ffmpeg_path}")
         print(f"save_dir: {settings.save_dir}")
@@ -180,7 +230,6 @@ class yt_downloader:
             print("\nVideo downloaded.")
         except Exception as e:
             print(f"\nError: {str(e)}")
-            pass
 
         UltraDownloader.main_menu(self=None)
     
@@ -294,6 +343,12 @@ class yt_downloader:
             print("\rDownload completed.")
 
 if __name__ == "__main__":
+    owner = "Ve1var"
+    repo = "UltraDownloader"
+    current_version = "v1.0.2"
+    asset_name = "UltraDownloader.rar"
+
     settings = settings()
     settings.load()
+    settings.check_updates(owner, repo, current_version, asset_name)
     UltraDownloader().check_settings()
