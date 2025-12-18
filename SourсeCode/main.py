@@ -4,6 +4,7 @@ import os
 import tkinter as tk
 import requests
 import zipfile
+import sys
 from tkinter import filedialog
 from pathlib import Path
 
@@ -77,21 +78,10 @@ class settings:
                         with open(save_path, "wb") as f:
                             for chunk in r.iter_content(chunk_size=8192):
                                 f.write(chunk)
-                    print(f"Download complete: {save_path}\nStart updating programm")
-                    self.programm_update(save_path=save_path)
+                    print(f"Download complete: {save_path}")
+                    UltraDownloader().main_menu()
                 except Exception as e:
                     print(f"Download error: {e}")
-    
-    def programm_update(self, save_path):
-        current_dir = Path(__file__).parent.absolute()
-        
-        save_path = save_path
-        
-        with zipfile.ZipFile(save_path, 'r') as zip_ref:
-            zip_ref.extractall(current_dir)
-        
-        print("Update complete")
-        quit()
     
     def load(self):
         try:
@@ -353,7 +343,7 @@ class yt_downloader:
 if __name__ == "__main__":
     owner = "Ve1var"
     repo = "UltraDownloader"
-    current_version = "v1.0.3"
+    current_version = "v1.0.2"
     asset_name = "UltraDownloader.zip"
 
     settings = settings()
