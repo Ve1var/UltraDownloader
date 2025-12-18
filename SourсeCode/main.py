@@ -3,13 +3,15 @@ import json
 import os
 import tkinter as tk
 import requests
+import zipfile
 from tkinter import filedialog
+from pathlib import Path
 
 APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
 SETTINGS_DIR = os.path.join(APP_DATA, APP_NAME)
 CONFIG_FILE = os.path.join(SETTINGS_DIR, "app_config.json")
-DETECTER_FILE = os.path.join(SETTINGS_DIR, "detecter.json") #not use btw
+DETECTER_FILE = os.path.join(SETTINGS_DIR, "detecter.json")
 
 DEFAULT_DIR = ""
 DEFAULT_FFMPEG = ""
@@ -43,7 +45,6 @@ class settings:
 
         data = response.json()
         latest_version = data['tag_name']
-        release_url = data['html_url']
         
         if current_version == latest_version:
             print("You are using the latest version.")
@@ -76,11 +77,21 @@ class settings:
                         with open(save_path, "wb") as f:
                             for chunk in r.iter_content(chunk_size=8192):
                                 f.write(chunk)
-                    print(f"Download complete: {save_path}")
+                    print(f"Download complete: {save_path}\nStart updating programm")
+                    self.programm_update(save_path=save_path)
                 except Exception as e:
                     print(f"Download error: {e}")
-                # === КОНЕЦ СКАЧИВАНИЯ ===
-  
+    
+    def programm_update(self, save_path):
+        current_dir = Path(__file__).parent.absolute()
+        
+        save_path = save_path
+        
+        with zipfile.ZipFile(save_path, 'r') as zip_ref:
+            zip_ref.extractall(current_dir)
+        
+        print("Update complete")
+        quit()
     
     def load(self):
         try:
@@ -249,7 +260,6 @@ class yt_downloader:
             print("Invalid choice. Defaulting to 'only this track'.")
             choice = '1'
 
-        # Опции для проверки типа ссылки
         ydl_opts_probe = {
             'quiet': True,
             'extract_flat': True,
@@ -271,7 +281,6 @@ class yt_downloader:
                 print(f"Could not analyze URL: {str(e)}")
                 entries = [url]
 
-        # Общие опции для скачивания аудио
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(music_dir, '%(title)s.%(ext)s'),
@@ -285,10 +294,9 @@ class yt_downloader:
             }],
             'progress_hooks': [lambda d: yt_downloader.update_progress(d, "Music")],
             'extract_flat': False,
-            'noplaylist': True,  # Обрабатываем вручную!
+            'noplaylist': True,
         }
 
-        # Скачивание каждого трека отдельно
         failed_count = 0
         total_count = len(entries)
         print(f"\nStarting download of {total_count} track(s)...")
@@ -301,7 +309,7 @@ class yt_downloader:
                 except Exception as e:
                     print(f"\n[Error] Failed to download #{i}: {str(e)}")
                     failed_count += 1
-                    continue  # Пропускаем и идём к следующему
+                    continue
 
         print(f"\nAudio extraction completed. {failed_count}/{total_count} tracks failed.")
         UltraDownloader.main_menu(self=None)
@@ -345,8 +353,8 @@ class yt_downloader:
 if __name__ == "__main__":
     owner = "Ve1var"
     repo = "UltraDownloader"
-    current_version = "v1.0.2"
-    asset_name = "UltraDownloader.rar"
+    current_version = "v1.0.3"
+    asset_name = "UltraDownloader.zip"
 
     settings = settings()
     settings.load()
