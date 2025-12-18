@@ -4,7 +4,6 @@ import os
 import tkinter as tk
 import requests
 import zipfile
-import sys
 from tkinter import filedialog
 from pathlib import Path
 
