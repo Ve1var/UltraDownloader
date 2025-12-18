@@ -3,7 +3,6 @@ import json
 import os
 import tkinter as tk
 import requests
-import zipfile
 from tkinter import filedialog
 from pathlib import Path
 
@@ -11,7 +10,7 @@ APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
 SETTINGS_DIR = os.path.join(APP_DATA, APP_NAME)
 CONFIG_FILE = os.path.join(SETTINGS_DIR, "app_config.json")
-DETECTER_FILE = os.path.join(SETTINGS_DIR, "detecter.json")
+CHECKER_FILE = os.path.join(SETTINGS_DIR, "checker.json")
 
 DEFAULT_DIR = ""
 DEFAULT_FFMPEG = ""
@@ -83,33 +82,29 @@ class settings:
                     print(f"Download error: {e}")
     
     def load(self):
+        self.detecter_links = ["youtube", "youtu", "vk"]
         try:
-            with open(DETECTER_FILE, 'r', encoding='utf-8') as f:
-                self.detecter_links = json.load(f)
-        
-        except (FileNotFoundError, json.JSONDecodeError):
-            print(f"[System Error] Detecter file not found or corrupted. Creating default at {DETECTER_FILE}")
-            default_detect = "test"
-            with open(DETECTER_FILE, 'w', encoding='utf-8') as f:
-                json.dump(default_detect, f, indent=4, ensure_ascii=False)
+            with open(CHECKER_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.detecter_links, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"[System Error] Could not write default checker: {e}")
 
-        finally:
-            print("[System] Detecter file completly load")
-            
+        print("[System] Detecter file loaded (YouTube & VK only)")
+
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 self.save_dir = config.get("dir", DEFAULT_DIR)
                 self.ffmpeg_path = config.get("ffmpeg_dir", DEFAULT_FFMPEG)
-        
         except (FileNotFoundError, json.JSONDecodeError):
             print(f"[System Error] Config file not found or corrupted. Creating default at {CONFIG_FILE}")
             default_config = {"dir": DEFAULT_DIR, "ffmpeg_dir": DEFAULT_FFMPEG}
             with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
                 json.dump(default_config, f, indent=4, ensure_ascii=False)
-
         finally:
-            print("[System] Config file completly load")
+            print("[System] Config file completely loaded")
+
+
         
     def save_setting(self, new_dir=None, new_ffmpeg=None):
         try:
@@ -207,8 +202,23 @@ class UltraDownloader:
         self.main_menu()
     
 class yt_downloader:
+    def link_check(self, url):
+        allowed_domains = [
+            'youtube.com', 
+            'youtu.be', 
+            'vk.com'
+        ]
+        url_lower = url.lower()
+        return any(domain in url_lower for domain in allowed_domains)
+
     def yt_download_video(self, save_dir, ffmpeg_path):
         url = input("Enter Video URL: ").strip()
+        
+        if yt_downloader().link_check(url):
+            pass
+        else:
+            print("Link unsoported")
+            UltraDownloader().main_menu()
         
         base_download_dir = os.path.join(save_dir, "UD_Downloaded")
         service_dir = os.path.join(base_download_dir, "Video")
@@ -342,7 +352,7 @@ class yt_downloader:
 if __name__ == "__main__":
     owner = "Ve1var"
     repo = "UltraDownloader"
-    current_version = "v1.0.2"
+    current_version = "v1.0.3"
     asset_name = "UltraDownloader.zip"
 
     settings = settings()
