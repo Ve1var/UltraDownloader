@@ -131,7 +131,7 @@ class UltraDownloader:
         print("--------------")
         print("1. Download Video")
         print("2. Download Music")
-        print("d. Change directorys")
+        print("d. Change directories")
         print("q. Quit")
         choice = input("Enter choice: ").strip().lower()
 
