@@ -3,6 +3,7 @@ import json
 import os
 import tkinter as tk
 import requests
+import sys
 from tkinter import filedialog
 from pathlib import Path
 
@@ -39,14 +40,14 @@ class settings:
         response = requests.get(url)
         
         if response.status_code != 200:
-            print("Failed to check for updates.")
+            print("[Updater] Failed to check for updates.")
             return None
 
         data = response.json()
         latest_version = data['tag_name']
         
         if current_version == latest_version:
-            print("You are using the latest version.")
+            print("[Updater] You are using the latest version.")
             return None
         else:
             answer = input("New version available [y/n] (default 'y'): ").strip().lower()
@@ -62,13 +63,13 @@ class settings:
                         break
 
                 if not target_asset:
-                    print(f"Asset {asset_name} not found.")
+                    print(f"[Updater Error] Asset {asset_name} not found.")
                     return
 
                 download_url = target_asset["browser_download_url"]
                 DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
                 save_path = os.path.join(DOWNLOADS_DIR, asset_name)                
-                print(f"Downloading {asset_name}...")
+                print(f"[Updater] Downloading {asset_name}...")
 
                 try:
                     with requests.get(download_url, stream=True) as r:
@@ -76,13 +77,16 @@ class settings:
                         with open(save_path, "wb") as f:
                             for chunk in r.iter_content(chunk_size=8192):
                                 f.write(chunk)
-                    print(f"Download complete: {save_path}")
+                    print(f"[Updater] Download complete: {save_path}")
                     UltraDownloader().main_menu()
                 except Exception as e:
-                    print(f"Download error: {e}")
+                    print(f"[Updater Error] Download error: {e}")
     
     def load(self):
         self.detecter_links = ["youtube", "youtu", "vk"]
+        global detecter_links
+        detecter_links = self.detecter_links[:]
+
         try:
             with open(CHECKER_FILE, 'w', encoding='utf-8') as f:
                 json.dump(self.detecter_links, f, indent=4, ensure_ascii=False)
@@ -104,8 +108,6 @@ class settings:
         finally:
             print("[System] Config file completely loaded")
 
-
-        
     def save_setting(self, new_dir=None, new_ffmpeg=None):
         try:
             if new_dir:
@@ -129,7 +131,7 @@ class UltraDownloader:
         print("--------------")
         print("1. Download Video")
         print("2. Download Music")
-        print("d. Change directory")
+        print("d. Change directorys")
         print("q. Quit")
         choice = input("Enter choice: ").strip().lower()
 
@@ -145,36 +147,67 @@ class UltraDownloader:
             if choice != "q":
                 func()
             else:
-                func()
+                print("Exiting UltraDownloader. Goodbye!")
+                sys.exit()
         else:
-            print("Invalid choice. Please try again.")
+            print("[System] Invalid choice. Please try again.")
             self.main_menu()
     
     def check_settings(self):
         if settings.save_dir == "" or settings.ffmpeg_path == "":
-            print("Directory not set. Please set the directory first.")
+            print("[System] Directory not set. Please set the directory first.")
             self.set_dirs()
         else:
             self.main_menu()
 
     def change_dir(self):
+        print("\n--------------")
+        print("1. Change FFMPEG Directory")
+        print("2. Change Download Directory")
+        print("q. Back to main menu")
+        print("--------------")
+        choice = input("Enter choice: ").strip().lower()
+        action = {
+            "1": lambda: self.dir(ffmpeg_path="1", save_dir=""),
+            "2": lambda: self.dir(ffmpeg_path="", save_dir="1"),
+            "q": lambda: self.main_menu()
+        }
         try:
-            print("Select download directory in the folder dialog...")
-            new_dir = filedialog.askdirectory(
-                parent=root,
-                title="Select Download Folder",
-            )
-            settings.save_setting(new_dir=new_dir)
+            func = action.get(choice)
+            if func:
+                if choice != "q":
+                    func()
+            else:
+                func()
+            self.main_menu()
         except:
-            new_dir = None
+            print("Error")
 
         finally:
             self.main_menu()
 
+    def dir(self, ffmpeg_path, save_dir):
+        if(ffmpeg_path != ""):
+            new_ffmpeg = filedialog.askopenfilename(
+                    parent=root,
+                    title="Select ffmpeg.exe",
+                    filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
+            )
+            settings.save_setting(new_ffmpeg=new_ffmpeg)
+        
+        elif(save_dir != ""):
+            new_dir = filedialog.askdirectory(
+                    parent=root,
+                    title="Select Download Folder",
+            )
+            settings.save_setting(new_dir=new_dir)
+        
+        self.main_menu()
+
     def set_dirs(self):
         if(settings.ffmpeg_path == ""):
             try:
-                print("Select ffmpeg.exe in the file dialog...")
+                print("[Dir Setter] Select ffmpeg.exe in the file dialog...")
                 new_ffmpeg = filedialog.askopenfilename(
                     parent=root,
                     title="Select ffmpeg.exe",
@@ -188,7 +221,7 @@ class UltraDownloader:
         
         if(settings.save_dir == ""):
             try:
-                print("Select download directory in the folder dialog...")
+                print("[Dir Setter] Select download directory in the folder dialog...")
                 new_dir = filedialog.askdirectory(
                     parent=root,
                     title="Select Download Folder",
@@ -217,7 +250,7 @@ class yt_downloader:
         if yt_downloader().link_check(url):
             pass
         else:
-            print("Link unsoported")
+            print("[Downloader Error] Link unsoported")
             UltraDownloader().main_menu()
         
         base_download_dir = os.path.join(save_dir, "UD_Downloaded")
@@ -237,14 +270,20 @@ class yt_downloader:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-            print("\nVideo downloaded.")
+            print("\n[Downloader] Video downloaded.")
         except Exception as e:
-            print(f"\nError: {str(e)}")
+            print(f"\n[Downloader Error] Error: {str(e)}")
 
         UltraDownloader.main_menu(self=None)
     
     def yt_download_music(self, save_dir, ffmpeg_path):
         url = input("Enter Music URL: ").strip()
+
+        if yt_downloader().link_check(url):
+            pass
+        else:
+            print("[Downloader Error] Link unsoported")
+            UltraDownloader().main_menu()
         
         base_download_dir = os.path.join(save_dir, "UD_Downloaded")
         music_dir = os.path.join(base_download_dir, "Music")
@@ -256,7 +295,7 @@ class yt_downloader:
         choice = input("Enter choice (1 or 2): ").strip()
 
         if choice not in ['1', '2']:
-            print("Invalid choice. Defaulting to 'only this track'.")
+            print("[System] Invalid choice. Defaulting to 'only this track'.")
             choice = '1'
 
         ydl_opts_probe = {
@@ -274,10 +313,10 @@ class yt_downloader:
                     print(f"Found playlist: '{playlist_title}' | {video_count} tracks")
                     entries = [entry['url'] for entry in info['entries'] if entry]
                 else:
-                    print("Single track detected.")
+                    print("[Downloader] Single track detected.")
                     entries = [url]
             except Exception as e:
-                print(f"Could not analyze URL: {str(e)}")
+                print(f"[Downloader Error] Could not analyze URL: {str(e)}")
                 entries = [url]
 
         ydl_opts = {
@@ -298,7 +337,7 @@ class yt_downloader:
 
         failed_count = 0
         total_count = len(entries)
-        print(f"\nStarting download of {total_count} track(s)...")
+        print(f"\n[Downloader] Starting download of {total_count} track(s)...")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             for i, entry_url in enumerate(entries, 1):
@@ -306,11 +345,11 @@ class yt_downloader:
                     print(f"\n\n[{i}/{total_count}] Processing: {entry_url}")
                     ydl.download([entry_url])
                 except Exception as e:
-                    print(f"\n[Error] Failed to download #{i}: {str(e)}")
+                    print(f"\n[Downloader Error] Failed to download #{i}: {str(e)}")
                     failed_count += 1
                     continue
 
-        print(f"\nAudio extraction completed. {failed_count}/{total_count} tracks failed.")
+        print(f"\n[Downloader] Audio extraction completed. {failed_count}/{total_count} tracks failed.")
         UltraDownloader.main_menu(self=None)
 
 
@@ -347,12 +386,12 @@ class yt_downloader:
 
         elif d['status'] == 'finished':
             print("\r" + " " * terminal_width, end="", flush=True)
-            print("\rDownload completed.")
+            print("\r[Downloader] Download completed.")
 
 if __name__ == "__main__":
     owner = "Ve1var"
     repo = "UltraDownloader"
-    current_version = "v1.0.3"
+    current_version = "v1.0.4"
     asset_name = "UltraDownloader.zip"
 
     settings = settings()
