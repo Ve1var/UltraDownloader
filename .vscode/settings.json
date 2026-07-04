@@ -1,5 +1,0 @@
-{
-    "editor.defaultFormatter": "ms-python.python",
-    "editor.defaultFoldingRangeProvider": "ms-python.python",
-    "notebook.defaultFormatter": "ms-python.debugpy"
-}
