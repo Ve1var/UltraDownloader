@@ -22,6 +22,7 @@ A powerful, user-friendly media downloader application for Windows that supports
 - **Persistent settings**: Saves download directory and FFmpeg path between sessions
 - **First-run setup**: Guided configuration on first launch
 - **Windows AppData integration**: Stores configuration in `%APPDATA%\UltraDownloader\`
+- **Auto-updater**: Built-in update checker with automatic download and installation
 
 ### 🎯 User Experience
 - **Real-time progress bars**: Visual download progress with speed indicators
@@ -47,21 +48,22 @@ A powerful, user-friendly media downloader application for Windows that supports
 For audio conversion features:
 1. Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/)
 2. Extract to a folder
-3. In UltraDownloader, select option `p` to set the path to `ffmpeg.exe`
+3. In UltraDownloader, select option `d`, then `1` to set the path
 
 ## 📖 How to Use
 
 ### Main Menu Options
 
 ```cmd
-UltraDownloader v1.0.1
+UltraDownloader v1.0.5
 --------------
 ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
 save_dir: C:/Users/79779/Videos
 --------------
 1. Download Video
 2. Download Music
-d. Change directory
+d. Change directories
+u. Check for updates
 q. Quit
 Enter choice:
 ```
@@ -97,6 +99,11 @@ Your_Selected_Directory/
 └── ...
 ```
 
+### Checking for Updates (EN)
+1. Select option `u` from the main menu
+2. The AutoUpdater will check for new versions
+3. Follow the prompts to download and install updates
+
 ## ⚠️ Important Notes
 
 ### Legal Considerations
@@ -112,7 +119,7 @@ Your_Selected_Directory/
 ### Troubleshooting
 
 #### "ffmpeg.exe not found"
-- Set FFmpeg path using option `p` in the main menu
+- Set FFmpeg path using option `d` in the main menu
 - Or download FFmpeg from the official website
 
 #### Download fails
@@ -126,7 +133,7 @@ Your_Selected_Directory/
 
 ## 🔧 Technical Details
 
-- **Built with**: Python, yt-dlp, Tkinter
+- **Built with**: Python, yt-dlp, Tkinter, requests
 - **Configuration**: JSON-based in `%APPDATA%\UltraDownloader\app_config.json`
 - **Dependencies**: FFmpeg
 - **Platform**: Windows (standalone EXE)
@@ -167,6 +174,7 @@ MIT License — free use and modification of the code
 - **Постоянные настройки**: Сохраняет каталог загрузки и путь к FFmpeg между сеансами.
 - **Настройка при первом запуске**: Управляемая настройка при первом запуске
 - **Интеграция с Windows AppData**: Сохраняет конфигурацию в `%APPDATA%\UltraDownloader\`
+- **Автообновление**: Встроенная проверка обновлений с автоматической загрузкой и установкой
 
 ### 🎯 Удобство работы с пользователем
 - **Индикаторы выполнения в реальном времени**: Визуальный ход загрузки с индикаторами скорости
@@ -192,21 +200,22 @@ MIT License — free use and modification of the code
 Для функций преобразования аудио:
 1. Загрузите FFmpeg из [ffmpeg.org](https://ffmpeg.org/)
 2. Извлеките файл в папку
-3. В UltraDownloader выберите опцию `p`, чтобы указать путь к `ffmpeg.exe`
+3. В UltraDownloader выберите опцию `d`, затем `1` чтобы указать путь
 
-## 📖 как использовать
+## 📖 Как использовать
 
 ### Пункты главного меню
 
 ```cmd
-UltraDownloader v1.0.1
+UltraDownloader v1.0.5
 --------------
 ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
 save_dir: C:/Users/79779/Videos
 --------------
 1. Download Video
 2. Download Music
-d. Change directory
+d. Change directories
+u. Check for updates
 q. Quit
 Enter choice:
 ```
@@ -242,6 +251,11 @@ Enter choice:
 └── ...
 ```
 
+### Проверка обновлений (RU)
+1. Выберите опцию `u` в главном меню
+2. AutoUpdater проверит наличие новых версий
+3. Следуйте инструкциям для загрузки и установки обновлений
+
 ## ❗️ Важные замечания
 
 ### Юридические соображения
@@ -257,7 +271,7 @@ Enter choice:
 ### Устранение неполадок
 
 #### "ffmpeg.exe не найдено"
-- Укажите путь к файлу FFmpeg, используя опцию `p` в главном меню
+- Укажите путь к файлу FFmpeg, используя опцию `d` в главном меню
 - Или загрузите файл FFmpeg с официального веб-сайта
 
 #### Ошибка загрузки
@@ -271,14 +285,14 @@ Enter choice:
 
 ## 🔧 Технические подробности
 
-- **Создано с использованием**: Python, yt-dlp, Tkinter
+- **Создано с использованием**: Python, yt-dlp, Tkinter, requests
 - **Конфигурация**: на основе JSON в `%APPDATA%\UltraDownloader\app_config.json`
 - **Зависимости**: FFmpeg
 - **Платформа**: Windows (автономный исполняемый файл)
 
 ## 📄 Лицензия
 
-Использование и модификация кода без лицензии MIT
+Лицензия MIT — свободное использование и модификация кода
 
 **Наслаждайтесь загрузкой с UltraDownloader!** 🎉
 
