@@ -141,12 +141,13 @@ Your_Selected_Directory/
 - **Dependencies**: FFmpeg
 - **Platform**: Windows (standalone EXE)
 
-## 🔒 Security
+## 🔒 Configuration Protection
 
-- **Encrypted configuration**: All settings including repository metadata are stored encrypted using Fernet symmetric encryption
-- **Secure key generation**: Encryption keys are derived from your system information (hostname, username, platform)
-- **Protected storage**: Sensitive data is stored in `%APPDATA%\UltraDownloader\secure_config.bin`
-- **No plaintext credentials**: Repository information is never stored in plaintext
+UltraDownloader stores its settings (download/FFmpeg paths and update-repository info) in an encrypted binary file rather than plain JSON. This isn't about hiding secrets — it's about protecting the app from accidental damage:
+
+- **Encrypted storage**: Configuration is stored encrypted using Fernet symmetric encryption in `%APPDATA%\UltraDownloader\secure_config.bin`
+- **Tamper-resistant**: The config can't be hand-edited in a text editor, so a stray character or bad path won't break the app — all changes go through the in-app menus
+- **Machine-bound keys**: Encryption keys are derived from your system information (hostname, username, platform), so a config file can't be copy-pasted between machines and cause confusing mismatches
 
 ## 📄 License
 
@@ -299,16 +300,17 @@ Enter choice:
 ## 🔧 Технические подробности
 
 - **Создано с использованием**: Python, yt-dlp, Tkinter, requests
-- **Конфигурация**: на основе JSON в `%APPDATA%\UltraDownloader\app_config.json`
+- **Конфигурация**: зашифрованное бинарное хранилище в `%APPDATA%\UltraDownloader\secure_config.bin` (также поддерживается устаревший JSON-конфиг)
 - **Зависимости**: FFmpeg
 - **Платформа**: Windows (автономный исполняемый файл)
 
-## 🔒 Безопасность
+## 🔒 Защита конфигурации
 
-- **Зашифрованная конфигурация**: Все настройки, включая метаданные репозитория, хранятся в зашифрованном виде с использованием симметричного шифрования Fernet
-- **Безопасная генерация ключей**: Ключи шифрования создаются на основе информации о вашей системе (имя хоста, имя пользователя, платформа)
-- **Защищенное хранилище**: Конфиденциальные данные хранятся в `%APPDATA%\UltraDownloader\secure_config.bin`
-- **Нет открытых учетных данных**: Информация о репозитории никогда не хранится в открытом виде
+UltraDownloader хранит настройки (пути к загрузкам/FFmpeg и данные репозитория для обновлений) в зашифрованном бинарном файле, а не в обычном JSON. Это не про сокрытие секретов — это защита приложения от случайной порчи настроек:
+
+- **Зашифрованное хранилище**: Конфигурация хранится в зашифрованном виде с использованием симметричного шифрования Fernet, в `%APPDATA%\UltraDownloader\secure_config.bin`
+- **Защита от случайных правок**: Файл конфигурации нельзя отредактировать вручную в текстовом редакторе — случайный лишний символ или неверный путь не сломает программу, все изменения проходят через меню приложения
+- **Ключи привязаны к машине**: Ключи шифрования создаются на основе информации о вашей системе (имя хоста, имя пользователя, платформа), поэтому файл конфигурации нельзя просто скопировать на другой компьютер и получить путаницу из-за несовпадений
 
 ## 📄 Лицензия
 
