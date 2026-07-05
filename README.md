@@ -1,5 +1,7 @@
 # UltraDownloader 🚀 [EN]
 
+> **Version 1.0.6**: Now includes encrypted configuration storage and improved FFmpeg setup experience!
+
 A powerful, user-friendly media downloader application for Windows that supports downloading videos and music from multiple platforms including YouTube, VK, and other music services.
 
 ## 📥 Download Latest Version
@@ -23,6 +25,7 @@ A powerful, user-friendly media downloader application for Windows that supports
 - **First-run setup**: Guided configuration on first launch
 - **Windows AppData integration**: Stores configuration in `%APPDATA%\UltraDownloader\`
 - **Auto-updater**: Built-in update checker with automatic download and installation
+- **Encrypted settings**: All configuration data is stored securely with encryption
 
 ### 🎯 User Experience
 - **Real-time progress bars**: Visual download progress with speed indicators
@@ -42,23 +45,23 @@ A powerful, user-friendly media downloader application for Windows that supports
 2. **Run** the executable (no installation required)
 3. **Follow the setup prompts**:
    - Select your preferred download directory
-   - Set FFmpeg path for audio conversion
+   - You will be prompted to set FFmpeg path (can be skipped and configured later)
 
 ### FFmpeg Setup (optional, all the necessary FFmpeg files are already in the release archive)
 For audio conversion features:
-1. Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/)
-2. Extract to a folder
-3. In UltraDownloader, select option `d`, then `1` to set the path
+1. On first launch, you will be prompted to set FFmpeg path (you can skip and configure later)
+2. Alternatively, in UltraDownloader, select option `d`, then `1` to set the path
+3. Or download FFmpeg from [ffmpeg.org](https://ffmpeg.org/) and extract to a folder
 
 ## 📖 How to Use
 
 ### Main Menu Options
 
 ```cmd
-UltraDownloader v1.0.5
+UltraDownloader v_._._
 --------------
 ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
-save_dir: C:/Users/79779/Videos
+save_dir: C:/Users/___/Videos
 --------------
 1. Download Video
 2. Download Music
@@ -134,9 +137,16 @@ Your_Selected_Directory/
 ## 🔧 Technical Details
 
 - **Built with**: Python, yt-dlp, Tkinter, requests
-- **Configuration**: JSON-based in `%APPDATA%\UltraDownloader\app_config.json`
+- **Configuration**: Encrypted binary storage in `%APPDATA%\UltraDownloader\secure_config.bin` (legacy JSON config also supported)
 - **Dependencies**: FFmpeg
 - **Platform**: Windows (standalone EXE)
+
+## 🔒 Security
+
+- **Encrypted configuration**: All settings including repository metadata are stored encrypted using Fernet symmetric encryption
+- **Secure key generation**: Encryption keys are derived from your system information (hostname, username, platform)
+- **Protected storage**: Sensitive data is stored in `%APPDATA%\UltraDownloader\secure_config.bin`
+- **No plaintext credentials**: Repository information is never stored in plaintext
 
 ## 📄 License
 
@@ -151,6 +161,8 @@ MIT License — free use and modification of the code
 
 
 # UltraDownloader 🚀 [RU]
+
+> **Версия 1.0.6**: Теперь включает зашифрованное хранилище конфигурации и улучшенную настройку FFmpeg!
 
 Мощное и удобное приложение для загрузки мультимедиа для Windows, которое поддерживает загрузку видео и музыки с нескольких платформ, включая YouTube, VK и другие музыкальные сервисы.
 
@@ -175,6 +187,7 @@ MIT License — free use and modification of the code
 - **Настройка при первом запуске**: Управляемая настройка при первом запуске
 - **Интеграция с Windows AppData**: Сохраняет конфигурацию в `%APPDATA%\UltraDownloader\`
 - **Автообновление**: Встроенная проверка обновлений с автоматической загрузкой и установкой
+- **Зашифрованные настройки**: Все данные конфигурации хранятся в зашифрованном виде
 
 ### 🎯 Удобство работы с пользователем
 - **Индикаторы выполнения в реальном времени**: Визуальный ход загрузки с индикаторами скорости
@@ -194,23 +207,23 @@ MIT License — free use and modification of the code
 2. **Запустите** исполняемый файл (установка не требуется)
 3. **Следуйте инструкциям по установке**:
    - Выберите предпочитаемый каталог загрузки
-   - Укажите путь к файлу FFmpeg для преобразования аудио
+   - Будет предложено указать путь к FFmpeg (можно пропустить и настроить позже)
 
-### Настройка FFmpeg (необязатольно, все нужные файлы FFmpeg уже есть в архиве релиза)
+### Настройка FFmpeg (необязательно, все нужные файлы FFmpeg уже есть в архиве релиза)
 Для функций преобразования аудио:
-1. Загрузите FFmpeg из [ffmpeg.org](https://ffmpeg.org/)
-2. Извлеките файл в папку
-3. В UltraDownloader выберите опцию `d`, затем `1` чтобы указать путь
+1. При первом запуске вам будет предложено указать путь к FFmpeg (можно пропустить и настроить позже)
+2. Альтернативно, в UltraDownloader выберите опцию `d`, затем `1` чтобы указать путь
+3. Или загрузите FFmpeg из [ffmpeg.org](https://ffmpeg.org/) и извлеките в папку
 
 ## 📖 Как использовать
 
 ### Пункты главного меню
 
 ```cmd
-UltraDownloader v1.0.5
+UltraDownloader v_._._
 --------------
 ffmpeg_dir: C:/ffmpeg/bin/ffmpeg.exe
-save_dir: C:/Users/79779/Videos
+save_dir: C:/Users/___/Videos
 --------------
 1. Download Video
 2. Download Music
@@ -289,6 +302,13 @@ Enter choice:
 - **Конфигурация**: на основе JSON в `%APPDATA%\UltraDownloader\app_config.json`
 - **Зависимости**: FFmpeg
 - **Платформа**: Windows (автономный исполняемый файл)
+
+## 🔒 Безопасность
+
+- **Зашифрованная конфигурация**: Все настройки, включая метаданные репозитория, хранятся в зашифрованном виде с использованием симметричного шифрования Fernet
+- **Безопасная генерация ключей**: Ключи шифрования создаются на основе информации о вашей системе (имя хоста, имя пользователя, платформа)
+- **Защищенное хранилище**: Конфиденциальные данные хранятся в `%APPDATA%\UltraDownloader\secure_config.bin`
+- **Нет открытых учетных данных**: Информация о репозитории никогда не хранится в открытом виде
 
 ## 📄 Лицензия
 
