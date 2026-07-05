@@ -1,3 +1,4 @@
+# UltraDownloader.py
 import yt_dlp
 import json
 import os
@@ -5,6 +6,7 @@ import tkinter as tk
 import sys
 import subprocess
 from tkinter import filedialog
+from SecureConfig import SecureConfig
 
 APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
@@ -32,44 +34,60 @@ class Settings:
         self.version_tag = ""
         self.asset_name = ""
         self.is_first_run = False
+        self._secure_config = SecureConfig()
     
     def load(self):
-        default_config = {
-            "save_dir": "",
-            "ffmpeg_path": "",
-            "repo_owner": "Ve1var",
-            "repo_name": "UltraDownloader",
-            "version_tag": "v1.0.5",
-            "asset_name": "UltraDownloader.zip"
+        secure_data = self._secure_config.load_config()
+        
+        if secure_data:
+            self.save_dir = secure_data.get('save_dir', '')
+            self.ffmpeg_path = secure_data.get('ffmpeg_path', '')
+            
+            repo_config = secure_data.get('repository', {})
+            self.repo_owner = repo_config.get('owner', '')
+            self.repo_name = repo_config.get('name', '')
+            self.version_tag = secure_data.get('version_tag', '')
+            self.asset_name = repo_config.get('asset_name', '')
+            
+            if self.save_dir:
+                return
+        
+        default_config = self._create_default_config()
+        self._secure_config.save_config(default_config)
+        
+        self.save_dir = default_config.get('save_dir', '')
+        self.ffmpeg_path = default_config.get('ffmpeg_path', '')
+        repo_config = default_config.get('repository', {})
+        self.repo_owner = repo_config.get('owner', '')
+        self.repo_name = repo_config.get('name', '')
+        self.version_tag = default_config.get('version_tag', '')
+        self.asset_name = repo_config.get('asset_name', '')
+        self.is_first_run = True
+    
+    def _create_default_config(self):
+        return {
+            'save_dir': '',
+            'ffmpeg_path': '',
+            'version_tag': '',
+            'repository': {
+                'owner': '',
+                'name': '',
+                'asset_name': ''
+            }
         }
-        
-        try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            config = default_config
-            self.is_first_run = True
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                json.dump(default_config, f, indent=4, ensure_ascii=False)
-        
-        self.save_dir = config.get("save_dir", default_config["save_dir"])
-        self.ffmpeg_path = config.get("ffmpeg_path", default_config["ffmpeg_path"])
-        self.repo_owner = config.get("repo_owner", default_config["repo_owner"])
-        self.repo_name = config.get("repo_name", default_config["repo_name"])
-        self.version_tag = config.get("version_tag", default_config["version_tag"])
-        self.asset_name = config.get("asset_name", default_config["asset_name"])
     
     def save(self):
-        config = {
-            "save_dir": self.save_dir,
-            "ffmpeg_path": self.ffmpeg_path,
-            "repo_owner": self.repo_owner,
-            "repo_name": self.repo_name,
-            "version_tag": self.version_tag,
-            "asset_name": self.asset_name
+        config_data = {
+            'save_dir': self.save_dir,
+            'ffmpeg_path': self.ffmpeg_path,
+            'version_tag': self.version_tag,
+            'repository': {
+                'owner': self.repo_owner,
+                'name': self.repo_name,
+                'asset_name': self.asset_name
+            }
         }
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=4, ensure_ascii=False)
+        self._secure_config.save_config(config_data)
 
 class LinkChecker:
     ALLOWED_DOMAINS = ['youtube.com', 'youtu.be', 'vk.com']
@@ -144,7 +162,7 @@ class Downloader:
             'format': 'best[ext=mp4]/best',
             'quiet': False,
             'no_warnings': True,
-            'ffmpeg_location': self.settings.ffmpeg_path,
+            'ffmpeg_location': self.settings.ffmpeg_path if self.settings.ffmpeg_path else None,
             'noplaylist': True,
             'extract_flat': False,
             'progress_hooks': [ProgressDisplay.create_hook("Video")]
@@ -186,7 +204,7 @@ class Downloader:
             'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
             'quiet': False,
             'no_warnings': True,
-            'ffmpeg_location': self.settings.ffmpeg_path,
+            'ffmpeg_location': self.settings.ffmpeg_path if self.settings.ffmpeg_path else None,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -264,11 +282,27 @@ class Menu:
         if not self.settings.save_dir:
             print("[System] Download directory not set.")
             self._set_save_dir()
+        
+        if not self.settings.ffmpeg_path:
+            self._prompt_ffmpeg()
+    
+    def _prompt_ffmpeg(self):
+        print("\n[Settings] FFmpeg is required for audio conversion and video processing.")
+        print("Would you like to specify the FFmpeg directory now?")
+        print("1. Yes, select ffmpeg.exe")
+        print("2. Skip (you can set it later from the menu)")
+        choice = input("Enter choice (1 or 2): ").strip()
+        
+        if choice == '1':
+            self._set_ffmpeg_path()
+        else:
+            print("[Settings] FFmpeg path skipped. You can set it later using option 'd' in main menu.")
     
     def _display_main_menu(self):
         print(f"\nUltraDownloader {self.settings.version_tag}")
         print("--------------")
-        print(f"ffmpeg_dir: {self.settings.ffmpeg_path if self.settings.ffmpeg_path else 'Not set (optional)'}")
+        ffmpeg_status = "Not set" if not self.settings.ffmpeg_path else "Set"
+        print(f"ffmpeg_dir: {self.settings.ffmpeg_path if self.settings.ffmpeg_path else 'Not set'}")
         print(f"save_dir: {self.settings.save_dir}")
         print("--------------")
         print("1. Download Video")
@@ -321,26 +355,42 @@ class Menu:
     
     def _set_ffmpeg_path(self):
         print("[Settings] Select ffmpeg.exe in the file dialog...")
-        path = filedialog.askopenfilename(
-            parent=root,
-            title="Select ffmpeg.exe",
-            filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
-        )
-        if path:
-            self.settings.ffmpeg_path = path
-            self.settings.save()
-            print("[Settings] FFMPEG path updated.")
+        print("[Settings] If you want to skip, close the file dialog without selecting.")
+        
+        try:
+            path = filedialog.askopenfilename(
+                parent=root,
+                title="Select ffmpeg.exe",
+                filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
+            )
+            if path:
+                self.settings.ffmpeg_path = path
+                self.settings.save()
+                print(f"[Settings] FFMPEG path updated: {path}")
+            else:
+                print("[Settings] FFMPEG path not changed.")
+        except Exception as e:
+            print(f"[Settings Error] Failed to open file dialog: {e}")
+            print("[Settings] You can set FFMPEG path later using option 'd' in main menu.")
     
     def _set_save_dir(self):
         print("[Settings] Select download directory in the folder dialog...")
-        path = filedialog.askdirectory(
-            parent=root,
-            title="Select Download Folder"
-        )
-        if path:
-            self.settings.save_dir = path
-            self.settings.save()
-            print("[Settings] Download directory updated.")
+        print("[Settings] If you want to skip, close the folder dialog without selecting.")
+        
+        try:
+            path = filedialog.askdirectory(
+                parent=root,
+                title="Select Download Folder"
+            )
+            if path:
+                self.settings.save_dir = path
+                self.settings.save()
+                print(f"[Settings] Download directory updated: {path}")
+            else:
+                print("[Settings] Download directory not changed.")
+        except Exception as e:
+            print(f"[Settings Error] Failed to open folder dialog: {e}")
+            print("[Settings] You can set download directory later using option 'd' in main menu.")
 
 if __name__ == "__main__":
     settings = Settings()

@@ -6,6 +6,7 @@ import zipfile
 import shutil
 import tempfile
 import subprocess
+from SourсeCode.SecureConfig import SecureConfig
 
 APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
@@ -19,8 +20,28 @@ class Updater:
         self.current_version = ""
         self.asset_name = ""
         self.app_dir = ""
+        self.update_url = ""
+        self.checksum = ""
     
     def load_config(self):
+        secure_config = SecureConfig()
+        secure_data = secure_config.load_config()
+        
+        if secure_data:
+            repo_config = secure_data.get('repository', {})
+            self.repo_owner = repo_config.get('owner', '')
+            self.repo_name = repo_config.get('name', '')
+            self.asset_name = repo_config.get('asset_name', '')
+            self.current_version = secure_data.get('version_tag', '')
+            self.update_url = secure_data.get('update_endpoint', 'https://api.github.com')
+            
+            if all([self.repo_owner, self.repo_name, self.current_version, self.asset_name]):
+                if getattr(sys, 'frozen', False):
+                    self.app_dir = os.path.dirname(sys.executable)
+                else:
+                    self.app_dir = os.path.dirname(os.path.abspath(__file__))
+                return True
+        
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                 config = json.load(f)
@@ -29,6 +50,7 @@ class Updater:
             self.repo_name = config.get("repo_name", "")
             self.current_version = config.get("version_tag", "")
             self.asset_name = config.get("asset_name", "")
+            self.update_url = config.get("update_endpoint", "https://api.github.com")
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"[Updater Error] Failed to load config: {e}")
             return False
@@ -45,16 +67,38 @@ class Updater:
         return True
     
     def check_for_updates(self):
-        url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/releases/latest"
+        if self.update_url == "https://api.github.com":
+            url = f"{self.update_url}/repos/{self.repo_owner}/{self.repo_name}/releases/latest"
+        else:
+            url = f"{self.update_url}/api/updates/{self.repo_owner}/{self.repo_name}"
         
         try:
-            response = requests.get(url, timeout=10)
+            headers = {
+                'User-Agent': f'{APP_NAME}/{self.current_version}',
+                'Accept': 'application/json'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
             if response.status_code != 200:
-                print(f"[Updater Error] GitHub API returned status {response.status_code}")
+                print(f"[Updater Error] Update server returned status {response.status_code}")
                 return None
             
             data = response.json()
-            latest_version = data.get('tag_name', '')
+            
+            if self.update_url == "https://api.github.com":
+                latest_version = data.get('tag_name', '')
+                assets = data.get("assets", [])
+                download_url = None
+                
+                for asset in assets:
+                    if asset.get("name") == self.asset_name:
+                        download_url = asset.get("browser_download_url")
+                        break
+            else:
+                latest_version = data.get('version', '')
+                download_url = data.get('download_url', '')
+                self.checksum = data.get('checksum', '')
             
             if not latest_version:
                 print("[Updater Error] Could not determine latest version.")
@@ -66,21 +110,14 @@ class Updater:
             
             print(f"[Updater] New version available: {latest_version} (current: {self.current_version})")
             
-            assets = data.get("assets", [])
-            download_url = None
-            
-            for asset in assets:
-                if asset.get("name") == self.asset_name:
-                    download_url = asset.get("browser_download_url")
-                    break
-            
             if not download_url:
                 print(f"[Updater Error] Asset '{self.asset_name}' not found in release.")
                 return None
             
             return {
                 "version": latest_version,
-                "download_url": download_url
+                "download_url": download_url,
+                "checksum": self.checksum
             }
             
         except requests.RequestException as e:
