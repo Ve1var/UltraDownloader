@@ -6,6 +6,7 @@ import zipfile
 import shutil
 import tempfile
 import subprocess
+import time
 from SecureConfig import SecureConfig
 
 APP_NAME = "UltraDownloader"
@@ -105,14 +106,29 @@ class Updater:
             print(f"[Updater Error] Unexpected error: {e}")
             return None
     
-    def download_update(self, download_url):
+    def _replace_file_with_retry(self, src, dst, max_retries=10, delay=1):
+        for attempt in range(max_retries):
+            try:
+                if os.path.exists(dst):
+                    os.remove(dst)
+                shutil.copy2(src, dst)
+                return True
+            except PermissionError as e:
+                print(f"[Updater] File locked, retry {attempt + 1}/{max_retries}: {e}")
+                time.sleep(delay)
+            except Exception as e:
+                print(f"[Updater] Error copying file: {e}")
+                return False
+        return False
+    
+    def download_and_install(self, update_info):
         try:
             temp_dir = tempfile.mkdtemp()
             zip_path = os.path.join(temp_dir, self.asset_name)
             
             print(f"[Updater] Downloading {self.asset_name}...")
             
-            response = requests.get(download_url, stream=True, timeout=300)
+            response = requests.get(update_info['download_url'], stream=True, timeout=300)
             response.raise_for_status()
             
             total_size = int(response.headers.get('content-length', 0))
@@ -137,21 +153,60 @@ class Updater:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
             
+            print("[Updater] Waiting for main application to fully close...")
+            time.sleep(3)
+            
             print("[Updater] Replacing files...")
             
-            update_files = ['UltraDownloader.exe', 'AutoUpdater.exe', 'SecureConfig.py', '_internal']
+            main_exe_src = None
+            main_exe_dst = os.path.join(self.app_dir, "UltraDownloader.exe")
             
-            for item in os.listdir(extract_dir):
-                src = os.path.join(extract_dir, item)
-                dst = os.path.join(self.app_dir, item)
-                
-                if item in update_files:
-                    if os.path.isdir(src):
-                        if os.path.exists(dst):
-                            shutil.rmtree(dst)
-                        shutil.copytree(src, dst)
-                    else:
-                        shutil.copy2(src, dst)
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    if file == "UltraDownloader.exe":
+                        main_exe_src = os.path.join(root_dir, file)
+                        break
+                if main_exe_src:
+                    break
+            
+            if main_exe_src and os.path.exists(main_exe_src):
+                print(f"[Updater] Replacing UltraDownloader.exe...")
+                if not self._replace_file_with_retry(main_exe_src, main_exe_dst):
+                    print("[Updater Error] Failed to replace UltraDownloader.exe")
+                    return False
+            else:
+                print("[Updater Warning] UltraDownloader.exe not found in update archive")
+            
+            updater_exe_src = None
+            updater_exe_dst = os.path.join(self.app_dir, "AutoUpdater.exe")
+            
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    if file == "AutoUpdater.exe":
+                        updater_exe_src = os.path.join(root_dir, file)
+                        break
+                if updater_exe_src:
+                    break
+            
+            if updater_exe_src and os.path.exists(updater_exe_src):
+                print(f"[Updater] Replacing AutoUpdater.exe...")
+                if not self._replace_file_with_retry(updater_exe_src, updater_exe_dst):
+                    print("[Updater Warning] Failed to replace AutoUpdater.exe")
+            
+            print("[Updater] Copying additional files...")
+            
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    if file not in ["UltraDownloader.exe", "AutoUpdater.exe"]:
+                        src_path = os.path.join(root_dir, file)
+                        rel_path = os.path.relpath(src_path, extract_dir)
+                        dst_path = os.path.join(self.app_dir, rel_path)
+                        
+                        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                        try:
+                            shutil.copy2(src_path, dst_path)
+                        except Exception as e:
+                            print(f"[Updater Warning] Could not copy {file}: {e}")
             
             shutil.rmtree(temp_dir)
             shutil.rmtree(extract_dir)
@@ -186,39 +241,43 @@ class Updater:
     
     def run(self):
         if not self.load_config():
-            input("Press Enter to exit...")
+            print("[Updater] Press Enter to exit...")
+            input()
             return
         
         update_info = self.check_for_updates()
         
         if not update_info:
-            input("Press Enter to exit...")
+            print("[Updater] Press Enter to exit...")
+            input()
             return
         
-        print(f"\nVersion {update_info['version']} is available.")
-        answer = input("Download and install update? [Y/n]: ").strip().lower()
+        print(f"\n[Updater] Version {update_info['version']} is available.")
+        answer = input("[Updater] Download and install update? [Y/n]: ").strip().lower()
         
         if answer and answer != 'y':
             print("[Updater] Update cancelled.")
-            input("Press Enter to exit...")
+            print("[Updater] Press Enter to exit...")
+            input()
             return
         
-        if self.download_update(update_info['download_url']):
+        if self.download_and_install(update_info):
             if not self._update_version_in_config(update_info['version']):
                 print("[Updater Warning] Version update failed, but files were updated.")
             
-            print("[Updater] Restarting application...")
+            print("[Updater] Update completed successfully!")
+            print("[Updater] Press Enter to exit and restart UltraDownloader...")
+            input()
             
             main_exe = os.path.join(self.app_dir, "UltraDownloader.exe")
             if os.path.exists(main_exe):
+                print("[Updater] Starting UltraDownloader...")
+                time.sleep(1)
                 subprocess.Popen([main_exe])
-            else:
-                print("[Updater] Could not find main executable to restart.")
-            
-            sys.exit(0)
         else:
             print("[Updater] Update failed.")
-            input("Press Enter to exit...")
+            print("[Updater] Press Enter to exit...")
+            input()
 
 if __name__ == "__main__":
     updater = Updater()

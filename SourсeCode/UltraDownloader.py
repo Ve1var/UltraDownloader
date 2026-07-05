@@ -1,9 +1,11 @@
+# UltraDownloader.py
 import yt_dlp
 import json
 import os
 import tkinter as tk
 import sys
 import subprocess
+import time
 from tkinter import filedialog
 from SecureConfig import SecureConfig
 
@@ -298,7 +300,7 @@ class Menu:
             elif choice == 'd':
                 self._handle_change_directories()
             elif choice == 'u':
-                self._run_updater()
+                self._handle_update()
             elif choice == 'q':
                 print("Exiting UltraDownloader. Goodbye!")
                 sys.exit(0)
@@ -366,19 +368,39 @@ class Menu:
             else:
                 print("[System] Invalid choice.")
     
-    def _run_updater(self):
-        updater_path = os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)), "AutoUpdater.exe")
+    def _handle_update(self):
+        print("[System] Checking for updates...")
+        
+        updater_path = os.path.join(
+            os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)), 
+            "AutoUpdater.exe"
+        )
         
         if not os.path.exists(updater_path):
             print(f"[System] Updater not found at: {updater_path}")
+            input("[System] Press Enter to continue...")
             return
         
         print("[System] Launching updater...")
+        print("[System] UltraDownloader will now close.")
+        print("[System] The updater will run in a new window.")
+        
+        time.sleep(1)
+        
         try:
-            subprocess.Popen([updater_path])
-            print("[System] Updater launched. Close this application to complete the update.")
+            if sys.platform == "win32":
+                subprocess.Popen([updater_path], creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+            else:
+                subprocess.Popen([updater_path], start_new_session=True)
+            
+            print("[System] Updater launched successfully.")
+            print("[System] Exiting UltraDownloader...")
+            time.sleep(1)
+            sys.exit(0)
+            
         except Exception as e:
             print(f"[System Error] Failed to launch updater: {e}")
+            input("[System] Press Enter to continue...")
     
     def _set_ffmpeg_path(self):
         print("[Settings] Select ffmpeg.exe in the file dialog...")
