@@ -148,6 +148,18 @@ class Downloader:
     def __init__(self, settings):
         self.settings = settings
     
+    def _check_ffmpeg(self):
+        if not self.settings.ffmpeg_path:
+            print("[Downloader Warning] FFmpeg not configured. Audio conversion may fail.")
+            return False
+        if not os.path.exists(self.settings.ffmpeg_path):
+            print(f"[Downloader Warning] FFmpeg not found at: {self.settings.ffmpeg_path}")
+            return False
+        if not os.path.isfile(self.settings.ffmpeg_path):
+            print(f"[Downloader Warning] FFmpeg path is not a file: {self.settings.ffmpeg_path}")
+            return False
+        return True
+    
     def download_video(self, url):
         if not LinkChecker.is_allowed(url):
             print("[Downloader Error] Link unsupported")
@@ -156,12 +168,16 @@ class Downloader:
         output_dir = os.path.join(self.settings.save_dir, "UD_Downloaded", "Video")
         os.makedirs(output_dir, exist_ok=True)
         
+        ffmpeg_location = None
+        if self._check_ffmpeg():
+            ffmpeg_location = self.settings.ffmpeg_path
+        
         ydl_opts = {
             'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
             'format': 'best[ext=mp4]/best',
             'quiet': False,
             'no_warnings': True,
-            'ffmpeg_location': self.settings.ffmpeg_path if self.settings.ffmpeg_path else None,
+            'ffmpeg_location': ffmpeg_location,
             'noplaylist': True,
             'extract_flat': False,
             'progress_hooks': [ProgressDisplay.create_hook("Video")]
@@ -184,6 +200,11 @@ class Downloader:
         output_dir = os.path.join(self.settings.save_dir, "UD_Downloaded", "Music")
         os.makedirs(output_dir, exist_ok=True)
         
+        if not self._check_ffmpeg():
+            print("[Downloader Error] FFmpeg is required for audio conversion.")
+            print("[Downloader] Please configure FFmpeg path using option 'd' in main menu.")
+            return False
+        
         print("Choose download mode:")
         print("1. Single track")
         print("2. Entire playlist/album")
@@ -203,7 +224,7 @@ class Downloader:
             'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
             'quiet': False,
             'no_warnings': True,
-            'ffmpeg_location': self.settings.ffmpeg_path if self.settings.ffmpeg_path else None,
+            'ffmpeg_location': self.settings.ffmpeg_path,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -244,7 +265,14 @@ class Downloader:
                     playlist_title = info.get('title', 'Playlist')
                     video_count = info.get('playlist_count', len(info.get('entries', [])))
                     print(f"Found playlist: '{playlist_title}' | {video_count} tracks")
-                    return [entry['url'] for entry in info['entries'] if entry]
+                    entries = []
+                    for entry in info['entries']:
+                        if entry:
+                            if 'url' in entry:
+                                entries.append(entry['url'])
+                            elif 'webpage_url' in entry:
+                                entries.append(entry['webpage_url'])
+                    return entries
                 else:
                     print("[Downloader] Single track detected.")
                     return [url]
@@ -363,9 +391,12 @@ class Menu:
                 filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
             )
             if path:
-                self.settings.ffmpeg_path = path
-                self.settings.save()
-                print(f"[Settings] FFMPEG path updated: {path}")
+                if os.path.exists(path) and os.path.isfile(path):
+                    self.settings.ffmpeg_path = path
+                    self.settings.save()
+                    print(f"[Settings] FFMPEG path updated: {path}")
+                else:
+                    print("[Settings] Invalid file selected. Path not changed.")
             else:
                 print("[Settings] FFMPEG path not changed.")
         except Exception as e:

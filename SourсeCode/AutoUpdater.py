@@ -6,12 +6,11 @@ import zipfile
 import shutil
 import tempfile
 import subprocess
-from SourсeCode.SecureConfig import SecureConfig
+from SecureConfig import SecureConfig
 
 APP_NAME = "UltraDownloader"
 APP_DATA = os.getenv('APPDATA')
 SETTINGS_DIR = os.path.join(APP_DATA, APP_NAME)
-CONFIG_FILE = os.path.join(SETTINGS_DIR, "app_config.json")
 
 class Updater:
     def __init__(self):
@@ -22,10 +21,10 @@ class Updater:
         self.app_dir = ""
         self.update_url = ""
         self.checksum = ""
+        self._secure_config = SecureConfig()
     
     def load_config(self):
-        secure_config = SecureConfig()
-        secure_data = secure_config.load_config()
+        secure_data = self._secure_config.load_config()
         
         if secure_data:
             repo_config = secure_data.get('repository', {})
@@ -42,29 +41,8 @@ class Updater:
                     self.app_dir = os.path.dirname(os.path.abspath(__file__))
                 return True
         
-        try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            
-            self.repo_owner = config.get("repo_owner", "")
-            self.repo_name = config.get("repo_name", "")
-            self.current_version = config.get("version_tag", "")
-            self.asset_name = config.get("asset_name", "")
-            self.update_url = config.get("update_endpoint", "https://api.github.com")
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"[Updater Error] Failed to load config: {e}")
-            return False
-        
-        if not all([self.repo_owner, self.repo_name, self.current_version, self.asset_name]):
-            print("[Updater Error] Incomplete configuration.")
-            return False
-        
-        if getattr(sys, 'frozen', False):
-            self.app_dir = os.path.dirname(sys.executable)
-        else:
-            self.app_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        return True
+        print("[Updater Error] Failed to load configuration from secure storage.")
+        return False
     
     def check_for_updates(self):
         if self.update_url == "https://api.github.com":
@@ -161,16 +139,19 @@ class Updater:
             
             print("[Updater] Replacing files...")
             
+            update_files = ['UltraDownloader.exe', 'AutoUpdater.exe', 'SecureConfig.py', '_internal']
+            
             for item in os.listdir(extract_dir):
                 src = os.path.join(extract_dir, item)
                 dst = os.path.join(self.app_dir, item)
                 
-                if os.path.isdir(src):
-                    if os.path.exists(dst):
-                        shutil.rmtree(dst)
-                    shutil.copytree(src, dst)
-                else:
-                    shutil.copy2(src, dst)
+                if item in update_files:
+                    if os.path.isdir(src):
+                        if os.path.exists(dst):
+                            shutil.rmtree(dst)
+                        shutil.copytree(src, dst)
+                    else:
+                        shutil.copy2(src, dst)
             
             shutil.rmtree(temp_dir)
             shutil.rmtree(extract_dir)
@@ -188,6 +169,21 @@ class Updater:
             print(f"\n[Updater Error] Installation failed: {e}")
             return False
     
+    def _update_version_in_config(self, new_version):
+        try:
+            secure_data = self._secure_config.load_config()
+            if secure_data:
+                secure_data['version_tag'] = new_version
+                self._secure_config.save_config(secure_data)
+                print(f"[Updater] Version updated to {new_version} in configuration.")
+                return True
+            else:
+                print("[Updater Error] Could not load config to update version.")
+                return False
+        except Exception as e:
+            print(f"[Updater Error] Failed to update version: {e}")
+            return False
+    
     def run(self):
         if not self.load_config():
             input("Press Enter to exit...")
@@ -196,6 +192,7 @@ class Updater:
         update_info = self.check_for_updates()
         
         if not update_info:
+            input("Press Enter to exit...")
             return
         
         print(f"\nVersion {update_info['version']} is available.")
@@ -203,9 +200,13 @@ class Updater:
         
         if answer and answer != 'y':
             print("[Updater] Update cancelled.")
+            input("Press Enter to exit...")
             return
         
         if self.download_update(update_info['download_url']):
+            if not self._update_version_in_config(update_info['version']):
+                print("[Updater Warning] Version update failed, but files were updated.")
+            
             print("[Updater] Restarting application...")
             
             main_exe = os.path.join(self.app_dir, "UltraDownloader.exe")
