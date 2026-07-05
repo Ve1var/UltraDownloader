@@ -1,4 +1,3 @@
-# UltraDownloader.py
 import yt_dlp
 import json
 import os
